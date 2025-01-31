@@ -19,6 +19,7 @@
         let tiles = []; // グリッドの状態
         let selectedTiles = []; // 選択したツムを保存
         let lastSelectedColor = ""; // 最後に選択したツムの色
+        let isSwiping = false; // スワイプ状態
 
         function createBoard() {
             tiles = [];
@@ -32,13 +33,14 @@
                 tiles.push(tile);
             }
 
-            // クリックでツムを選択
+            // クリックとスワイプでツムを選択
             tiles.forEach((tile, index) => {
                 tile.style.opacity = 1;
                 tile.style.transform = "translateY(0)";
-                tile.addEventListener("click", () => {
-                    selectTile(tile);
-                });
+                tile.addEventListener("click", (event) => selectTile(tile));
+                tile.addEventListener("mousedown", (event) => startSwipe(event, tile)); // スワイプ開始
+                tile.addEventListener("mousemove", (event) => swipeMove(event, tile)); // スワイプ中
+                tile.addEventListener("mouseup", endSwipe); // スワイプ終了
             });
         }
 
@@ -70,7 +72,7 @@
             }
         }
 
-        // つながっているかの判定（隣接しているか）
+        // つながっているかの判定（隣接しているか、斜めも考慮）
         function isAdjacent(lastTile, newTile) {
             const lastIndex = parseInt(lastTile.dataset.index);
             const newIndex = parseInt(newTile.dataset.index);
@@ -79,8 +81,10 @@
             const lastCol = lastIndex % gridSize;
             const newCol = newIndex % gridSize;
 
-            // 隣接しているか（横または縦で1つずれている場合）
-            return (Math.abs(lastRow - newRow) === 1 && lastCol === newCol) || (Math.abs(lastCol - newCol) === 1 && lastRow === newRow);
+            // 隣接しているか（横、縦、斜め方向）
+            return (
+                Math.abs(lastRow - newRow) <= 1 && Math.abs(lastCol - newCol) <= 1
+            );
         }
 
         // ツムが物理法則に基づいて落下する処理
@@ -115,6 +119,24 @@
                     }
                 }
             }, 500);
+        }
+
+        // スワイプ開始
+        function startSwipe(event, tile) {
+            isSwiping = true;
+            selectTile(tile); // スワイプ開始時に選択
+        }
+
+        // スワイプ中
+        function swipeMove(event, tile) {
+            if (isSwiping) {
+                selectTile(tile); // スワイプ中にもツムを選択
+            }
+        }
+
+        // スワイプ終了
+        function endSwipe() {
+            isSwiping = false;
         }
 
         // 初期盤面作成
