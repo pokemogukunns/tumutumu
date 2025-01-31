@@ -16,24 +16,26 @@
         const gridSize = 6;
         const grid = document.getElementById("grid");
         const tsumus = ["🟡", "🟢", "🔴", "🔵", "🟣"]; // ツムの種類
+        let tiles = []; // グリッドの状態
         let selectedTiles = []; // 選択したツムを保存
         let lastSelectedColor = ""; // 最後に選択したツムの色
 
         function createBoard() {
+            tiles = [];
+            grid.innerHTML = ""; // グリッドを初期化
             for (let i = 0; i < gridSize * gridSize; i++) {
                 const tile = document.createElement("div");
                 tile.classList.add("tile");
                 tile.textContent = tsumus[Math.floor(Math.random() * tsumus.length)];
                 tile.dataset.index = i; // ツムの位置情報を保存
                 grid.appendChild(tile);
+                tiles.push(tile);
             }
 
-            const tiles = document.querySelectorAll(".tile");
+            // クリックでツムを選択
             tiles.forEach((tile, index) => {
                 tile.style.opacity = 1;
                 tile.style.transform = "translateY(0)";
-                
-                // クリックでツムを選択
                 tile.addEventListener("click", () => {
                     selectTile(tile);
                 });
@@ -43,14 +45,14 @@
         function selectTile(tile) {
             const tileColor = tile.textContent; // 選択したツムの色（絵文字）
 
-            // すでに選択したツムがある場合、つなげる処理
+            // 最初のツムを選んだ時
             if (selectedTiles.length === 0) {
                 selectedTiles.push(tile);
                 lastSelectedColor = tileColor; // 最初に選んだツムの色
                 tile.style.background = "#f0f0f0"; // 選択中のツム色を変える
             } else {
-                // 最後に選んだツムと色が一致する場合のみ選択
-                if (lastSelectedColor === tileColor && !selectedTiles.includes(tile)) {
+                // 最後に選んだツムと色が一致し、隣接している場合のみ選択
+                if (lastSelectedColor === tileColor && !selectedTiles.includes(tile) && isAdjacent(selectedTiles[selectedTiles.length - 1], tile)) {
                     selectedTiles.push(tile);
                     tile.style.background = "#f0f0f0"; // 選択中のツム色を変える
                 }
@@ -62,8 +64,57 @@
                     selectedTiles.forEach(t => t.remove());
                     selectedTiles = [];
                     lastSelectedColor = ""; // 色リセット
+                    // 物理法則に基づいてツムを落下させる
+                    dropTiles();
                 }, 500);
             }
+        }
+
+        // つながっているかの判定（隣接しているか）
+        function isAdjacent(lastTile, newTile) {
+            const lastIndex = parseInt(lastTile.dataset.index);
+            const newIndex = parseInt(newTile.dataset.index);
+            const lastRow = Math.floor(lastIndex / gridSize);
+            const newRow = Math.floor(newIndex / gridSize);
+            const lastCol = lastIndex % gridSize;
+            const newCol = newIndex % gridSize;
+
+            // 隣接しているか（横または縦で1つずれている場合）
+            return (Math.abs(lastRow - newRow) === 1 && lastCol === newCol) || (Math.abs(lastCol - newCol) === 1 && lastRow === newRow);
+        }
+
+        // ツムが物理法則に基づいて落下する処理
+        function dropTiles() {
+            // 空のマスを埋める
+            for (let col = 0; col < gridSize; col++) {
+                let emptySpaces = []; // 空の場所を追跡
+                for (let row = gridSize - 1; row >= 0; row--) {
+                    const tileIndex = row * gridSize + col;
+                    const tile = tiles[tileIndex];
+                    if (!tile.textContent) {
+                        emptySpaces.push(tileIndex);
+                    } else if (emptySpaces.length > 0) {
+                        // 空の場所にツムを落とす
+                        const emptyTileIndex = emptySpaces.pop();
+                        const fallingTile = tiles[emptyTileIndex];
+                        fallingTile.textContent = tile.textContent;
+                        tile.textContent = "";
+                    }
+                }
+            }
+
+            // 新しいツムがランダムで上から降ってくる
+            setTimeout(() => {
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const index = j * gridSize + i;
+                        const tile = tiles[index];
+                        if (!tile.textContent) {
+                            tile.textContent = tsumus[Math.floor(Math.random() * tsumus.length)];
+                        }
+                    }
+                }
+            }, 500);
         }
 
         // 初期盤面作成
