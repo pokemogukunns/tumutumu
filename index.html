@@ -41,6 +41,17 @@
                 tile.addEventListener("mousedown", (event) => startSwipe(event, tile)); // スワイプ開始
                 tile.addEventListener("mousemove", (event) => swipeMove(event, tile)); // スワイプ中
                 tile.addEventListener("mouseup", endSwipe); // スワイプ終了
+
+                // タッチイベントのデフォルト動作を停止
+                tile.addEventListener("touchstart", (event) => {
+                    event.preventDefault(); // スクロールを無効化
+                    startSwipe(event, tile);
+                });
+                tile.addEventListener("touchmove", (event) => {
+                    event.preventDefault(); // スクロールを無効化
+                    swipeMove(event, tile);
+                });
+                tile.addEventListener("touchend", endSwipe);
             });
         }
 
