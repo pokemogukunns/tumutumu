@@ -17,6 +17,7 @@
         const grid = document.getElementById("grid");
         const tsumus = ["🟡", "🟢", "🔴", "🔵", "🟣"]; // ツムの種類
         let selectedTiles = []; // 選択したツムを保存
+        let lastSelectedColor = ""; // 最後に選択したツムの色
 
         function createBoard() {
             for (let i = 0; i < gridSize * gridSize; i++) {
@@ -40,14 +41,16 @@
         }
 
         function selectTile(tile) {
+            const tileColor = tile.textContent; // 選択したツムの色（絵文字）
+
             // すでに選択したツムがある場合、つなげる処理
             if (selectedTiles.length === 0) {
                 selectedTiles.push(tile);
+                lastSelectedColor = tileColor; // 最初に選んだツムの色
                 tile.style.background = "#f0f0f0"; // 選択中のツム色を変える
             } else {
-                // 最後に選んだツムと比較してつなげる
-                const lastSelectedTile = selectedTiles[selectedTiles.length - 1];
-                if (isConnected(lastSelectedTile, tile)) {
+                // 最後に選んだツムと色が一致する場合のみ選択
+                if (lastSelectedColor === tileColor && !selectedTiles.includes(tile)) {
                     selectedTiles.push(tile);
                     tile.style.background = "#f0f0f0"; // 選択中のツム色を変える
                 }
@@ -58,20 +61,9 @@
                 setTimeout(() => {
                     selectedTiles.forEach(t => t.remove());
                     selectedTiles = [];
+                    lastSelectedColor = ""; // 色リセット
                 }, 500);
             }
-        }
-
-        // つながっているかの判定（横か縦）
-        function isConnected(lastTile, newTile) {
-            const lastIndex = parseInt(lastTile.dataset.index);
-            const newIndex = parseInt(newTile.dataset.index);
-            const lastRow = Math.floor(lastIndex / gridSize);
-            const newRow = Math.floor(newIndex / gridSize);
-            const lastCol = lastIndex % gridSize;
-            const newCol = newIndex % gridSize;
-
-            return (lastRow === newRow || lastCol === newCol); // 横または縦でつながっている
         }
 
         // 初期盤面作成
