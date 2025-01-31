@@ -7,7 +7,7 @@
     <style>
         body { display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; }
         .grid { display: grid; grid-template-columns: repeat(6, 50px); gap: 5px; }
-        .tile { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: white; border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); opacity: 0; position: relative; }
+        .tile { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: white; border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); opacity: 0; position: relative; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -16,23 +16,62 @@
         const gridSize = 6;
         const grid = document.getElementById("grid");
         const tsumus = ["🟡", "🟢", "🔴", "🔵", "🟣"]; // ツムの種類
+        let selectedTiles = []; // 選択したツムを保存
 
         function createBoard() {
             for (let i = 0; i < gridSize * gridSize; i++) {
                 const tile = document.createElement("div");
                 tile.classList.add("tile");
                 tile.textContent = tsumus[Math.floor(Math.random() * tsumus.length)];
+                tile.dataset.index = i; // ツムの位置情報を保存
                 grid.appendChild(tile);
             }
 
-            // ツムを上から落ちるようにアニメーション
             const tiles = document.querySelectorAll(".tile");
             tiles.forEach((tile, index) => {
-                setTimeout(() => {
-                    tile.style.opacity = 1;
-                    tile.style.transform = "translateY(0)"; // 上から降りてくるアニメーション
-                }, index * 100); // 100msずつずらして落ちてくる
+                tile.style.opacity = 1;
+                tile.style.transform = "translateY(0)";
+                
+                // クリックでツムを選択
+                tile.addEventListener("click", () => {
+                    selectTile(tile);
+                });
             });
+        }
+
+        function selectTile(tile) {
+            // すでに選択したツムがある場合、つなげる処理
+            if (selectedTiles.length === 0) {
+                selectedTiles.push(tile);
+                tile.style.background = "#f0f0f0"; // 選択中のツム色を変える
+            } else {
+                // 最後に選んだツムと比較してつなげる
+                const lastSelectedTile = selectedTiles[selectedTiles.length - 1];
+                if (isConnected(lastSelectedTile, tile)) {
+                    selectedTiles.push(tile);
+                    tile.style.background = "#f0f0f0"; // 選択中のツム色を変える
+                }
+            }
+
+            // 3つ以上つなげた場合、消す処理
+            if (selectedTiles.length >= 3) {
+                setTimeout(() => {
+                    selectedTiles.forEach(t => t.remove());
+                    selectedTiles = [];
+                }, 500);
+            }
+        }
+
+        // つながっているかの判定（横か縦）
+        function isConnected(lastTile, newTile) {
+            const lastIndex = parseInt(lastTile.dataset.index);
+            const newIndex = parseInt(newTile.dataset.index);
+            const lastRow = Math.floor(lastIndex / gridSize);
+            const newRow = Math.floor(newIndex / gridSize);
+            const lastCol = lastIndex % gridSize;
+            const newCol = newIndex % gridSize;
+
+            return (lastRow === newRow || lastCol === newCol); // 横または縦でつながっている
         }
 
         // 初期盤面作成
@@ -40,4 +79,3 @@
     </script>
 </body>
 </html>
-
